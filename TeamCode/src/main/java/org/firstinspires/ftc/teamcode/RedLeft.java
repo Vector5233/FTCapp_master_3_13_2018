@@ -32,11 +32,13 @@ public class RedLeft extends LinearOpMode {
     float Lt, Rt;
 
     final double RIGHTGrab_COMPLETEOPEN = 0.8;
-    final double RIGHTGrab_CLOSE = 0.35; //used to be 0.4
+    final double RIGHTGrab_CLOSE = 0.33;
     final double LEFTGrab_COMPLETEOPEN = 0.2;
-    final double LEFTGrab_CLOSE = 0.65; //used to be 0.6
+    final double LEFTGrab_CLOSE = 0.67;
     final double RIGHTGrab_OPEN = 0.5;
     final double LEFTGrab_OPEN = 0.5;
+    final double RIGHTBottom_CLOSE = 0.3;
+    final double LEFTBottom_CLOSE = 0.7;
 
 
     final double SPROCKET_RATIO = 2.0 / 3.0;
@@ -50,12 +52,45 @@ public class RedLeft extends LinearOpMode {
     final double JEWEL_LEFT = 0.05;
     final double JEWEL_RETRY = 0.12;
 
+    final double DRIVE_FORWARD1 = 1;
+    final double STRAFE_LEFT = 5;
+    final double DRIVE_FORWARD_LEFT = 40; //was 38
+    final double DRIVE_FORWARD_RIGHT = 28; //was 27
+    final double DRIVE_FORWARD_CENTER = 33; // was 34
 
     OpenGLMatrix lastLocation = null;
 
     VuforiaLocalizer vuforia;
 
+    double start;
     @Override
+/*
+    public void singChristmasSong()
+    {
+        int christmas = 1;
+        while (christmas <10)
+        {
+            frontLeft.setPower(1.0);
+            frontRight.setPower(1.0);
+            backLeft.setPower(1.0);
+            backRight.setPower(1.0);
+            jewelRaiser.setPosition(JEWEL_DOWN);
+
+            sleep(1000);
+
+            frontLeft.setPower(-1.0);
+            frontRight.setPower(-1.0);
+            backLeft.setPower(-1.0);
+            backRight.setPower(-1.0);
+            jewelRaiser.setPosition(JEWEL_UP);
+            sleep(1000);
+            christmas ++;
+        }
+
+
+
+    }
+    */
     public void runOpMode() {
         initialization();
         waitForStart();
@@ -63,69 +98,67 @@ public class RedLeft extends LinearOpMode {
         sleep(1000);
         topRightGrab.setPosition(RIGHTGrab_CLOSE);
         topLeftGrab.setPosition(LEFTGrab_CLOSE);
-        bottomRightGrab.setPosition(LEFTGrab_CLOSE);
-        bottomLeftGrab.setPosition(RIGHTGrab_CLOSE);
+        bottomRightGrab.setPosition(LEFTBottom_CLOSE);
+        bottomLeftGrab.setPosition(RIGHTBottom_CLOSE);
         sleep(500);
         liftMotor.setPower(1.0);
-        sleep(500);
-        liftMotor.setPower(0.0);
+        sleep(250);
+        liftMotor.setPower(0.05);
         ray.RedKnocker();
+        start = gyro.getIntegratedZValue();
+        drive.DriveForwardDistance(0.3,DRIVE_FORWARD1);
         sleep(500);
-        drive.DriveForwardDistance(0.3,1);
-        sleep(500);
-        drive.TurnRightDegree(0.2, 96); //see blue right
+        drive.NewTurnDegrees(0.2, -90,start);
         sleep(500);
 
         switch (vuMark) {
             case LEFT: {
-                drive.DriveForwardDistance(0.5,38);
+                drive.DriveForwardDistance(0.5,DRIVE_FORWARD_LEFT);
                 sleep(500);
-                drive.StrafeLeftDistance(0.75,5); // didnt mirror
+                /*drive.StrafeLeftDistance(0.75,STRAFE_LEFT);
                 sleep(500);
-                drive.TurnRightDegree(0.3,96);
+                drive.NewTurnDegrees(0.3,-180,start);
                 sleep(500);
-                //drive.DriveForwardDistance(0.5,5);
-                //sleep(500);
-                drive.DeliverGlyph();
+                drive.DeliverGlyph();*/
                 break;
             }
             case RIGHT: {
-                drive.DriveForwardDistance(0.5,26);
+                drive.DriveForwardDistance(0.5,DRIVE_FORWARD_RIGHT);
                 sleep(500);
-                drive.StrafeLeftDistance(0.75,5);
+                /*drive.StrafeLeftDistance(0.75,STRAFE_LEFT);
                 sleep(500);
-                drive.TurnRightDegree(0.3,95);
+                drive.TurnDegrees(0.3,-180,start);
                  sleep(500);
-                //drive.DriveForwardDistance(0.5,5);
-                //sleep(500);
-                drive.DeliverGlyph();
+                drive.DeliverGlyph();*/
                 break;
             }
             case CENTER: {
-                drive.DriveForwardDistance(0.5,32);
+                drive.DriveForwardDistance(0.5,DRIVE_FORWARD_CENTER);
                 sleep(500);
-                drive.StrafeLeftDistance(0.75,5);
+                /*drive.StrafeLeftDistance(0.75,STRAFE_LEFT);
                 sleep(500);
-                drive.TurnRightDegree(0.3,96);
+                drive.TurnDegrees(0.3,-180,start);
                 sleep(500);
-                //drive.DriveForwardDistance(0.5,5);
-                //sleep(500);
-                drive.DeliverGlyph();
+                drive.DeliverGlyph();*/
                 break;
             }
             default: {
-                drive.DriveForwardDistance(0.5,32);
+                drive.DriveForwardDistance(0.5,DRIVE_FORWARD_CENTER);
                 sleep(500);
-                drive.StrafeLeftDistance(0.75,5);
+                /*drive.StrafeLeftDistance(0.75,STRAFE_LEFT);
                 sleep(500);
-                drive.TurnRightDegree(0.3,96);
+                drive.TurnDegrees(0.3,-180,start);
                 sleep(500);
-                //drive.DriveForwardDistance(0.5,5);
-                //sleep(500);
-                drive.DeliverGlyph();
+                drive.DeliverGlyph();*/
                 break;
             }
         }
+        drive.StrafeLeftDistance(0.75,STRAFE_LEFT);
+        sleep(500);
+        start = gyro.getIntegratedZValue();
+        drive.NewTurnDegrees(0.3,-90,start);
+        sleep(500);
+        drive.DeliverRed();
     }
 
     public void initialization() {
@@ -140,12 +173,13 @@ public class RedLeft extends LinearOpMode {
         jewelKnocker = hardwareMap.servo.get("jewel");
         jewelRaiser = hardwareMap.servo.get("raise");
         jewelRaiser.setPosition(JEWEL_UP);
+        jewelKnocker.setPosition(JEWEL_CENTER);
         gyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("gyro");
 
         topRightGrab = hardwareMap.servo.get("topRightGrab");
         topLeftGrab = hardwareMap.servo.get("topLeftGrab");
         bottomLeftGrab = hardwareMap.servo.get("bottomLeftGrab");
-        bottomLeftGrab = hardwareMap.servo.get("bottomRightGrab");
+        bottomRightGrab = hardwareMap.servo.get("bottomRightGrab");
 
         topRightGrab.setPosition(RIGHTGrab_COMPLETEOPEN);
         topLeftGrab.setPosition(LEFTGrab_COMPLETEOPEN);

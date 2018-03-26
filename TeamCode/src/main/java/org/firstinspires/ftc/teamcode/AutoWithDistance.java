@@ -29,6 +29,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -37,52 +38,30 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
-@Autonomous(name="RedRight", group ="Concept")
+@Autonomous(name="AutoWithDistance", group ="Concept")
 
-public class RedRight extends LinearOpMode {
+public class AutoWithDistance extends LinearOpMode {
     public static final String TAG = "Vuforia VuMark Sample";
 
     DcMotor frontLeft, liftMotor, frontRight, backLeft, backRight;
     Servo topLeftGrab, topRightGrab, bottomLeftGrab, bottomRightGrab, jewelKnocker, jewelRaiser;
     ModernRoboticsI2cGyro gyro;
     ColorSensor colorSensor;
+    ModernRoboticsI2cRangeSensor range;
+
     float red, green, blue;
 
     Drive drive;
     RaymondAutonomousOpMode ray;
 
-    float Lt, Rt;
-
-    final double RIGHTGrab_COMPLETEOPEN = 0.8;
-    final double RIGHTGrab_CLOSE = 0.33;
-    final double LEFTGrab_COMPLETEOPEN = 0.2;
-    final double LEFTGrab_CLOSE = 0.67;
-    final double RIGHTGrab_OPEN = 0.5;
-    final double LEFTGrab_OPEN = 0.5;
-    final double RIGHTBottom_CLOSE = 0.3;
-    final double LEFTBottom_CLOSE = 0.7;
-
     final double SPROCKET_RATIO = 2.0/3.0;
     final double TICKS_PER_INCH = SPROCKET_RATIO*(1120.0/(2*2*3.14159));
-
-    // Right, left, and center are facing the back of the bot
-    final double JEWEL_UP = 0.94;
-    final double JEWEL_DOWN = 0.38;
-    final double JEWEL_RIGHT = 0.25;
-    final double JEWEL_CENTER = 0.15;
-    final double JEWEL_LEFT = 0.05;
-    final double JEWEL_RETRY = 0.12;
-
-    final double DRIVE_FORWARD1 = 30;
-    final double DRIVE_FORWARD2 = 22;
-    final double STRAFE_RIGHT_LEFT = 11; //Was 10
-    final double STRAFE_RIGHT_RIGHT = 26; //Was 25 (needs to be increased a little)-->23-->24>26
-    final double STRAFE_RIGHT_CENTER = 18; //Was 18 (needs to be increased a little)-->16-->17>18
 
     OpenGLMatrix lastLocation = null;
 
@@ -95,54 +74,45 @@ public class RedRight extends LinearOpMode {
         waitForStart();
         RelicRecoveryVuMark vuMark = ReadPictograph();
         sleep(1000);
-        topRightGrab.setPosition(RIGHTGrab_CLOSE);
-        topLeftGrab.setPosition(LEFTGrab_CLOSE);
-        bottomRightGrab.setPosition(LEFTBottom_CLOSE);
-        bottomLeftGrab.setPosition(RIGHTBottom_CLOSE);
-        sleep(500);
-        liftMotor.setPower(1.0);
-        sleep(250);
-        liftMotor.setPower(0.05);
-        ray.RedKnocker();
-        start = gyro.getIntegratedZValue();
-        drive. DriveForwardDistance(0.5,DRIVE_FORWARD1);
-        sleep(500);
-        drive. NewTurnDegrees(0.5, -90, start);
-        //drive. TurnDegrees(0.5,-90);
-        sleep(500);
-        drive. DriveForwardDistance(0.5, DRIVE_FORWARD2);
-        sleep(500);
-
-
-        switch (vuMark){
+        int count = 0;
+        final double isAWall = 5;
+        switch (vuMark) {
             case LEFT: {
-                drive.StrafeRightDistance(0.3,STRAFE_RIGHT_LEFT);
-                /*sleep(500);
-                drive. DeliverGlyph();*/
+                int wall = 1;
+                while (count < wall && range.getDistance(DistanceUnit.INCH) <= isAWall) {
+                    count++;
+                    telemetry.addData("Distance", "%.2f in", range.getDistance(DistanceUnit.INCH));
+                }
                 break;
             }
             case RIGHT: {
-                drive. StrafeRightDistance(0.3,STRAFE_RIGHT_RIGHT);
-                /*sleep(500);
-                drive. DeliverGlyph();*/
+                int wall = 3;
+                while (count < wall && range.getDistance(DistanceUnit.INCH) <= isAWall) {
+                    count++;
+                    telemetry.addData("Distance", "%.2f in", range.getDistance(DistanceUnit.INCH));
+                }
                 break;
             }
             case CENTER: {
-                drive. StrafeRightDistance(0.3,STRAFE_RIGHT_CENTER);
-                /*sleep(500);
-                drive. DeliverGlyph();*/
+                int wall = 2;
+                while (count < wall && range.getDistance(DistanceUnit.INCH) <= isAWall) {
+                    count++;
+                    telemetry.addData("Distance", "%.2f in", range.getDistance(DistanceUnit.INCH));
+                }
                 break;
             }
-            default:{
-                drive. StrafeRightDistance(0.3,STRAFE_RIGHT_CENTER);
-                /*sleep(500);
-                drive. DeliverGlyph();*/
+            default: {
+                int wall = 2;
+                while (count < wall && range.getDistance(DistanceUnit.INCH) <= isAWall) {
+                    count++;
+                    telemetry.addData("Distance", "%.2f in", range.getDistance(DistanceUnit.INCH));
+                }
                 break;
+
             }
 
         }
-        sleep(500);
-        drive.DeliverRed();
+        telemetry.addLine("counter done");
     }
 
 
@@ -154,21 +124,15 @@ public class RedRight extends LinearOpMode {
         liftMotor = hardwareMap.dcMotor.get ("liftMotor");
 
         colorSensor = hardwareMap.colorSensor.get("color");
+        range = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "range");
         jewelKnocker = hardwareMap.servo.get("jewel");
         jewelRaiser = hardwareMap.servo.get("raise");
-        jewelRaiser.setPosition(JEWEL_UP);
-        jewelKnocker.setPosition(JEWEL_CENTER);
         gyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("gyro");
 
         topRightGrab = hardwareMap.servo.get("topRightGrab");
         topLeftGrab = hardwareMap.servo.get("topLeftGrab");
         bottomRightGrab = hardwareMap.servo.get("bottomRightGrab");
         bottomLeftGrab = hardwareMap.servo.get("bottomLeftGrab");
-
-        topRightGrab.setPosition(RIGHTGrab_COMPLETEOPEN);
-        topLeftGrab.setPosition(LEFTGrab_COMPLETEOPEN);
-        bottomLeftGrab.setPosition(RIGHTGrab_COMPLETEOPEN);
-        bottomRightGrab.setPosition(LEFTGrab_COMPLETEOPEN);
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.FORWARD);

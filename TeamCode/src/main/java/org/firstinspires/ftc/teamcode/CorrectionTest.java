@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.hardware.Servo;
  * Created by CCA on 1/24/2018.
  */
 @Autonomous(name="CorrectionTest", group = "my group")
+@Disabled
 public class CorrectionTest extends LinearOpMode {
     public static final String TAG = "Vuforia VuMark Sample";
 
@@ -26,9 +28,9 @@ public class CorrectionTest extends LinearOpMode {
     float Lt, Rt;
 
     final double RIGHTGrab_COMPLETEOPEN = 0.8;
-    final double RIGHTGrab_CLOSE = 0.35; //used to be 0.4
+    final double RIGHTGrab_CLOSE = 0.35;
     final double LEFTGrab_COMPLETEOPEN = 0.2;
-    final double LEFTGrab_CLOSE = 0.65; //used to be 0.6
+    final double LEFTGrab_CLOSE = 0.65;
     final double RIGHTGrab_OPEN = 0.5;
     final double LEFTGrab_OPEN = 0.5;
 
@@ -59,7 +61,7 @@ public class CorrectionTest extends LinearOpMode {
         sleep(5000);
         drive.TurnDegrees(0.5,-135);
         drive.StopDriving();
-        }
+    }
 
     public void initialization() {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
@@ -87,6 +89,6 @@ public class CorrectionTest extends LinearOpMode {
 
         while (gyro.isCalibrating() && opModeIsActive()){
             idle();
+        }
     }
-}
 }

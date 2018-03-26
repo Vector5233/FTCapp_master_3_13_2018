@@ -31,11 +31,13 @@ public class BlueLeft extends LinearOpMode {
     float Lt, Rt;
 
     final double RIGHTGrab_COMPLETEOPEN = 0.8;
-    final double RIGHTGrab_CLOSE = 0.35; //used to be 0.4
+    final double RIGHTGrab_CLOSE = 0.33;
     final double LEFTGrab_COMPLETEOPEN = 0.2;
-    final double LEFTGrab_CLOSE = 0.65; //used to be 0.6
+    final double LEFTGrab_CLOSE = 0.67;
     final double RIGHTGrab_OPEN = 0.5;
     final double LEFTGrab_OPEN = 0.5;
+    final double RIGHTBottom_CLOSE = 0.3;
+    final double LEFTBottom_CLOSE = 0.7;
 
     final double SPROCKET_RATIO = 2.0/3.0;
     final double TICKS_PER_INCH = SPROCKET_RATIO*(1120.0/(2*2*3.14159));
@@ -48,12 +50,19 @@ public class BlueLeft extends LinearOpMode {
     final double JEWEL_LEFT = 0.05;
     final double JEWEL_RETRY = 0.12;
 
+    final double DRIVE_FORWARD1 = 25;
+    final double DRIVE_FORWARD2 = 23; //was 22
+    final double STRAFE_LEFT_LEFT = 20; //Was 31
+    final double STRAFE_LEFT_RIGHT = 2; //Was 11
+    final double STRAFE_LEFT_CENTER = 11; //Was 20
+
     OpenGLMatrix lastLocation = null;
 
     VuforiaLocalizer vuforia;
 
-    @Override
-    public void runOpMode() {
+    double start;
+
+    @Override public void runOpMode() {
 
         initialization();
         waitForStart();
@@ -61,79 +70,52 @@ public class BlueLeft extends LinearOpMode {
         sleep(1000);
         topRightGrab.setPosition(RIGHTGrab_CLOSE);
         topLeftGrab.setPosition(LEFTGrab_CLOSE);
-        bottomRightGrab.setPosition(LEFTGrab_CLOSE);
-        bottomLeftGrab.setPosition(RIGHTGrab_CLOSE);
+        bottomRightGrab.setPosition(LEFTBottom_CLOSE);
+        bottomLeftGrab.setPosition(RIGHTBottom_CLOSE);
         sleep(500);
         liftMotor.setPower(1.0);
-        sleep(500);
-        liftMotor.setPower(0.0);
+        sleep(250);
+        liftMotor.setPower(0.05);
         ray.BlueKnocker();
+        start = gyro.getIntegratedZValue();
+        drive. DriveForwardDistance(0.5,DRIVE_FORWARD1);
+        sleep(500);
+        drive. NewTurnDegrees(0.5,90,start);
+        sleep(500);
+        drive. DriveForwardDistance(0.5,DRIVE_FORWARD2);
+        sleep(500);
 
-        switch (vuMark){
+        switch (vuMark) {
             case LEFT: {
                 // Case Left is Case Right in red right
-
-                drive. DriveForwardDistance(0.5,25);
+                drive.StrafeLeftDistance(0.3, STRAFE_LEFT_LEFT);
                 sleep(500);
-                drive. TurnLeftDegree(0.5,80);
-                sleep(500);
-                drive. DriveForwardDistance(0.5,22);
-                sleep(500);
-                drive. StrafeLeftDistance(0.3,20);
-                sleep(500);
-                //drive. DriveForwardDistance(0.5,12);
-                //sleep(500);
-                drive. DeliverGlyph();
+                //drive. DeliverGlyph();
                 break;
             }
             case RIGHT: {
                 // Case Right is Case Left in red right
-
-                drive. DriveForwardDistance(0.5,25);
+                drive.StrafeLeftDistance(0.3, STRAFE_LEFT_RIGHT);
                 sleep(500);
-                drive. TurnLeftDegree(0.5,80);
-                sleep(500);
-                drive. DriveForwardDistance(0.5,22);
-                sleep(500);
-                drive. StrafeLeftDistance(0.3,4);
-                sleep(500);
-                //drive. DriveForwardDistance(0.5,12);
-                //sleep(500);
-                drive. DeliverGlyph();
+                //drive. DeliverGlyph();
                 break;
             }
             case CENTER: {
-                drive. DriveForwardDistance(0.5,25);
+                drive.StrafeLeftDistance(0.3, STRAFE_LEFT_CENTER);
                 sleep(500);
-                drive. TurnLeftDegree(0.5,80);
-                sleep(500);
-                drive. DriveForwardDistance(0.5,22);
-                sleep(500);
-                drive. StrafeLeftDistance(0.3,10);
-                sleep(500);
-                //drive. DriveForwardDistance(0.5,12);
-                //sleep(500);
-                drive. DeliverGlyph();
+                //drive. DeliverGlyph();
                 break;
             }
-            default:{
-                drive. DriveForwardDistance(0.5,25);
+            default: {
+                drive.StrafeLeftDistance(0.3, STRAFE_LEFT_CENTER);
                 sleep(500);
-                drive. TurnLeftDegree(0.5,80);
-                sleep(500);
-                drive. DriveForwardDistance(0.5,22);
-                sleep(500);
-                drive. StrafeLeftDistance(0.3,10);
-                sleep(500);
-                //drive. DriveForwardDistance(0.5,12);
-                //sleep(500);
-                drive. DeliverGlyph();
+                //drive. DeliverGlyph();
                 break;
             }
 
         }
+        drive.DeliverBlue();
     }
-
 
     public void initialization () {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
@@ -146,9 +128,13 @@ public class BlueLeft extends LinearOpMode {
         jewelKnocker = hardwareMap.servo.get("jewel");
         jewelRaiser = hardwareMap.servo.get("raise");
         jewelRaiser.setPosition(JEWEL_UP);
+        jewelKnocker.setPosition(JEWEL_CENTER);
+        gyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("gyro");
 
         topRightGrab = hardwareMap.servo.get("topRightGrab");
         topLeftGrab = hardwareMap.servo.get("topLeftGrab");
+        bottomLeftGrab = hardwareMap.servo.get("bottomLeftGrab");
+        bottomRightGrab = hardwareMap.servo.get("bottomRightGrab");
         topRightGrab.setPosition(RIGHTGrab_COMPLETEOPEN);
         topLeftGrab.setPosition(LEFTGrab_COMPLETEOPEN);
         bottomRightGrab.setPosition(LEFTGrab_COMPLETEOPEN);

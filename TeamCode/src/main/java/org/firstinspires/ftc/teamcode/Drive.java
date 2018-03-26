@@ -4,6 +4,7 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
  * Created by CCA on 11/16/2017.
@@ -15,18 +16,18 @@ public class Drive extends Object {
     Servo jewelKnocker, topLeftGrab, topRightGrab, jewelRaiser, bottomLeftGrab, bottomRightGrab;
     ModernRoboticsI2cGyro gyro;
     LinearOpMode opmode;
-    /*ColorSensor colorSensor;
-    float red, green, blue;*/
+    //ModernRoboticsI2cRangeSensor rangeRight, rangeLeft;
 
     final double SPROCKET_RATIO = 2.0 / 3.0;
     final double TICKS_PER_INCH = SPROCKET_RATIO * (1120.0 / (2 * 2 * 3.14159));
     final double ROBOT_RADIUS = (135 / 103.25) * 5.75 * (90.0/76.0);
     final double TOLERANCE = 2;
+    final double ALLOWANCE = 2;
 
     final double RIGHTGrab_COMPLETEOPEN = 0.8;
-    final double RIGHTGrab_CLOSE = 0.35; //used to be 0.4
+    final double RIGHTGrab_CLOSE = 0.35;
     final double LEFTGrab_COMPLETEOPEN = 0.2;
-    final double LEFTGrab_CLOSE = 0.65; //used to be 0.6
+    final double LEFTGrab_CLOSE = 0.65;
     final double RIGHTGrab_OPEN = 0.5;
     final double LEFTGrab_OPEN = 0.5;
 
@@ -44,33 +45,50 @@ public class Drive extends Object {
         liftMotor = LM;
     }
 
+    public void NewTurnDegrees (double power, double degrees, double start) {
+        if (degrees > 0) {
+            double target;
+            target = start + degrees;
+            TurnLeftDegree(power, degrees);
+            TurnLeftCorrect(target);
+        } else if (degrees < 0) {
+            double target;
+            target = start + degrees;
+            TurnRightDegree(power, -degrees);
+            TurnRightCorrect(target);
+        } else {
+
+
+        }
+    }
+
+
+
     public void TurnDegrees (double power, double degrees) {
         if (degrees > 0){
             double target;
+            target = gyro.getIntegratedZValue() + degrees;
             opmode.telemetry.addData("Left Turn: Gyro", gyro.getIntegratedZValue());
             opmode.telemetry.update();
-            target = gyro.getIntegratedZValue() + degrees;
-
             TurnLeftDegree(power, degrees);
             opmode.sleep(500);
             TurnLeftCorrect(target);
         }
         else if (degrees < 0) {
             double target;
+            target = gyro.getIntegratedZValue() + degrees;
             opmode.telemetry.addData("Right Turn: Gyro", gyro.getIntegratedZValue());
             opmode.telemetry.update();
-            target = gyro.getIntegratedZValue() + degrees;
-
             TurnRightDegree(power, -degrees);
             TurnRightCorrect(target);
         }
         else{
+
         }
     }
 
     public void TurnLeftDegree(double power, double degrees) {
         // distance in inches
-        //conjecture instead of moving 12", wheels will go 12"*cos(45)= 8.5"
         int ticks = (int) ((2 * 3.14159 / 360) * degrees * ROBOT_RADIUS * TICKS_PER_INCH);
         if (power > 0.65) {
             power = 0.65;
@@ -80,25 +98,14 @@ public class Drive extends Object {
         opmode.telemetry.update();
         target = gyro.getIntegratedZValue() + degrees;
 
-        /*frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
-
         SetModeAll(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        SetModeAll(DcMotor.RunMode.RUN_TO_POSITION);
 
         frontLeft.setTargetPosition(-ticks);
         frontRight.setTargetPosition(ticks);
         backLeft.setTargetPosition(-ticks);
         backRight.setTargetPosition(ticks);
 
-        /*frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
-
+        SetModeAll(DcMotor.RunMode.RUN_TO_POSITION);
 
         frontLeft.setPower(power);
         frontRight.setPower(power);
@@ -119,20 +126,20 @@ public class Drive extends Object {
         opmode.telemetry.addData("Gyro start correct", g);
         opmode.telemetry.update();
         if (g > target + TOLERANCE){
-            TurnRightDegree(0.3, g - target);
+            TurnRightDegree(0.5, g - target);//power 0.3
         } else if (g < target - TOLERANCE){
-            TurnLeftDegree(0.3, target - g);
+            TurnLeftDegree(0.5, target - g); //power 0.3
         }
         else{
 
         }
+
         opmode.telemetry.addData("Gyro end correct", gyro.getIntegratedZValue());
         opmode.telemetry.update();
     }
 
     public void TurnRightDegree(double power, double degrees) {
         // distance in inches
-        //conjecture instead of moving 12", wheels will go 12"*cos(45)= 8.5"
         int ticks = (int) ((2 * 3.14159 / 360) * degrees * ROBOT_RADIUS * TICKS_PER_INCH);
         if (power > 0.65) {
             power = 0.65;
@@ -142,22 +149,12 @@ public class Drive extends Object {
         opmode.telemetry.update();
         target = gyro.getIntegratedZValue() - degrees;
 
-        /*frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
-
         SetModeAll(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeft.setTargetPosition(ticks);
         frontRight.setTargetPosition(-ticks);
         backLeft.setTargetPosition(ticks);
         backRight.setTargetPosition(-ticks);
-
-        /*frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
 
         SetModeAll(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -180,26 +177,22 @@ public class Drive extends Object {
         opmode.telemetry.addData("Gyro", g);
         opmode.telemetry.update();
         if (g > target + TOLERANCE) {
-            TurnRightDegree(0.3, g - target);
+            TurnRightDegree(0.5, g - target); //power 0.3
         } else if (g < target - TOLERANCE) {
-            TurnLeftDegree(0.3, target - g);
+            TurnLeftDegree(0.5, target - g); //power 0.3
         }
         else {
         }
     }
 
     public void StrafeRightDistance(double power, double distance) {
+
         // distance in inches
-        //conjecture instead of moving 12", wheels will go 12"*cos(45)= 8.5"
+        ElapsedTime rightTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
         int ticks = (int) (distance * TICKS_PER_INCH);
         if (power > 0.65) {
             power = 0.65;
         }
-
-        /*frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
 
         SetModeAll(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -208,35 +201,36 @@ public class Drive extends Object {
         backLeft.setTargetPosition(-ticks);
         backRight.setTargetPosition(ticks);
 
-        /*frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
-
         SetModeAll(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(power);
-        frontRight.setPower(power);
-        backLeft.setPower(power);
-        backRight.setPower(power);
+        rightTime.reset();
+        rightTime.startTime();
 
-        while (frontRight.isBusy() && frontLeft.isBusy()) ;
+        while (frontRight.isBusy() && frontLeft.isBusy()) {
+
+            if (rightTime.seconds() < power) {
+                frontLeft.setPower(rightTime.seconds());
+                frontRight.setPower(rightTime.seconds());
+                backLeft.setPower(rightTime.seconds());
+                backRight.setPower(rightTime.seconds());
+            } else {
+                frontLeft.setPower(power);
+                frontRight.setPower(power);
+                backLeft.setPower(power);
+                backRight.setPower(power);
+            }
+        }
 
         StopDriving();
     }
 
     public void StrafeLeftDistance(double power, double distance) {
         // distance in inches
-        //conjecture instead of moving 12", wheels will go 12"*cos(45)= 8.5"
+        ElapsedTime leftTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
         int ticks = (int) (distance * TICKS_PER_INCH);
         if (power > 0.65) {
             power = 0.65;
         }
-
-        /*frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
 
         SetModeAll(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -245,36 +239,35 @@ public class Drive extends Object {
         backLeft.setTargetPosition(ticks);
         backRight.setTargetPosition(-ticks);
 
-        /*frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
-
         SetModeAll(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(power);
-        frontRight.setPower(power);
-        backLeft.setPower(power);
-        backRight.setPower(power);
+        leftTime.reset();
+        leftTime.startTime();
 
-        while (frontRight.isBusy() && frontLeft.isBusy()) ;
+        while (frontRight.isBusy() && frontLeft.isBusy()) {
+            if (leftTime.seconds() < power) {
+                frontLeft.setPower(leftTime.seconds());
+                frontRight.setPower(leftTime.seconds());
+                backLeft.setPower(leftTime.seconds());
+                backRight.setPower(leftTime.seconds());
+            }
+
+            else {
+                frontLeft.setPower(power);
+                frontRight.setPower(power);
+                backLeft.setPower(power);
+                backRight.setPower(power);}
+        }
 
         StopDriving();
     }
 
     public void DriveForwardDistance(double power, double distance) {
         // distance in inches
-        //FR,FL,BR,BL, Back motors are slower to stop
-        //Does the motors have the same issue in method "DriveBackwardDistance"
         int ticks = (int) (distance * TICKS_PER_INCH);
         if (power > 0.65) {
             power = 0.65;
         }
-
-        /*frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
 
         SetModeAll(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -282,11 +275,6 @@ public class Drive extends Object {
         frontRight.setTargetPosition(ticks);
         backRight.setTargetPosition(ticks);
         backLeft.setTargetPosition(ticks);
-
-        /*frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
 
         SetModeAll(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -307,22 +295,12 @@ public class Drive extends Object {
             power = 0.65;
         }
 
-        /*frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
-
         SetModeAll(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         frontLeft.setTargetPosition(-ticks);
         frontRight.setTargetPosition(-ticks);
         backLeft.setTargetPosition(-ticks);
         backRight.setTargetPosition(-ticks);
-
-        /*frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
 
         SetModeAll(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -335,6 +313,32 @@ public class Drive extends Object {
 
         StopDriving();
     }
+
+    /*public void BlueStrafeCorrect(double goal) {
+        double d;
+        d = rangeLeft.getDistance(DistanceUnit.INCH);
+        if (d > goal + ALLOWANCE) {
+            StrafeLeftDistance(0.5,d - goal);
+            }
+        else if (d < goal - ALLOWANCE) {
+            StrafeRightDistance(0.5,goal - d);
+            }
+        else {
+        }
+    }
+
+    public void RedStrafeCorrect (double goal) {
+        double d;
+        d = rangeRight.getDistance(DistanceUnit.INCH);
+        if (d > goal + ALLOWANCE) {
+            StrafeRightDistance(0.5,d - goal);
+            }
+        else if (d < goal - ALLOWANCE) {
+            StrafeLeftDistance(0.5,goal - d);
+            }
+        else{
+            }
+    }*/
 
     public void StopDriving() {
 
@@ -350,16 +354,6 @@ public class Drive extends Object {
         if (power > 0.65) {
             power = 0.65;
         }
-
-        /*frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);*/
 
         SetModeAll(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         SetModeAll(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -386,16 +380,6 @@ public class Drive extends Object {
             power = 0.65;
         }
 
-        /*frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);*/
-
         SetModeAll(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         SetModeAll(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -412,7 +396,6 @@ public class Drive extends Object {
 
     public void DeliverGlyph() {
         liftMotor.setDirection(DcMotor.Direction.FORWARD); //FORWARD Raises Lift
-        opmode.sleep(700);
         liftMotor.setPower(-1.0);
         opmode.sleep(500);
         bottomLeftGrab.setPosition(RIGHTGrab_OPEN);
@@ -420,9 +403,27 @@ public class Drive extends Object {
         opmode.sleep(250);
         liftMotor.setPower(0.0);
         opmode.sleep(500);
-        DriveForwardTime(0.5, 2000);
+        DriveForwardTime(0.5, 1000);
+        /*opmode.sleep(500);
+        TurnLeftDegree(0.3,20);
         opmode.sleep(500);
-        DriveBackwardDistance(1, 6); // can back up more
+        DriveBackwardDistance(1, 6);*/
+        StopDriving();
+    }
+
+    public void DeliverRed() {
+        DeliverGlyph();
+        TurnRightDegree(0.3,20);
+        opmode.sleep(500);
+        DriveBackwardDistance(1, 6);
+        StopDriving();
+    }
+
+    public void DeliverBlue() {
+        DeliverGlyph();
+        TurnLeftDegree(0.3,20);
+        opmode.sleep(500);
+        DriveBackwardDistance(1,6);
         StopDriving();
     }
 
@@ -432,31 +433,4 @@ public class Drive extends Object {
         backLeft.setMode(mode);
         backRight.setMode(mode);
     }
-
-    //double target_angle_degrees = 90;
-
-
-
-    /*public void TurnToAngle(double target) {
-
-        double g = gyro.getHeading();
-        opmode.telemetry.addData("Gyro 1", g);
-        opmode.telemetry.update();
-
-        if (Math.abs(g - target) < TOLERANCE) {
-            return;
-        } else while (Math.abs(g - target) >= TOLERANCE && opmode.opModeIsActive()) {
-
-            frontLeft.setPower(0.01 * (g - target));
-            frontRight.setPower(0.01 * (target - g));
-            backRight.setPower(0.01 * (target - g));
-            backLeft.setPower(0.01 * (g - target));
-
-            gyro.getHeading();
-            g = gyro.getHeading();
-            opmode.telemetry.addData("Gyro 2", g);
-            opmode.telemetry.update();
-            StopDriving();
-        }*/
-
 }
